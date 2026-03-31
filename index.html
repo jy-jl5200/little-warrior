@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>小勇士任务系统 v2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:#1a1a2e;color:white;min-height:100vh}
+.screen{display:none;min-height:100vh;flex-direction:column}.screen.active{display:flex}
+.login-bg{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);align-items:center;justify-content:center;padding:1.5rem}
+.login-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:1.5rem;padding:2rem;width:100%;max-width:360px}
+.login-logo{text-align:center;margin-bottom:2rem}
+.login-logo .emoji{font-size:4rem;display:block;animation:float 3s ease-in-out infinite;margin-bottom:.5rem}
+.login-logo h1{font-size:1.75rem;font-weight:900;margin:.5rem 0}
+.login-logo p{color:#a5b4fc;font-size:.9rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;color:#c7d2fe;font-size:.8rem;font-weight:600;margin-bottom:.4rem}
+.form-group input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:.75rem;padding:.75rem 1rem;color:white;font-size:1rem;outline:none}
+.form-group input:focus{border-color:#6366f1}
+.form-group input::placeholder{color:rgba(255,255,255,.4)}
+.pin-input{font-size:1.5rem!important;text-align:center;letter-spacing:.5em}
+.btn{width:100%;padding:.875rem;border:none;border-radius:.875rem;font-size:1rem;font-weight:700;cursor:pointer;margin-top:.5rem;display:block;text-align:center;color:white}
+.btn:active{transform:scale(.97)}
+.btn-purple{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.btn-green{background:linear-gradient(135deg,#10b981,#059669)}
+.btn-gold{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.btn-red{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.btn-sm{width:auto;padding:.4rem .875rem;font-size:.8rem;border-radius:.5rem;margin-top:0;display:inline-block}
+.error-msg{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);border-radius:.75rem;padding:.6rem 1rem;color:#fca5a5;font-size:.85rem;text-align:center;margin-bottom:1rem;display:none}
+.switch-link{text-align:center;margin-top:1.25rem}
+.switch-link a{color:#818cf8;font-size:.85rem;cursor:pointer}
+.hint{color:rgba(255,255,255,.35);font-size:.7rem;text-align:center;margin-top:.75rem}
+.navbar{background:rgba(0,0,0,.4);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.1);padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.navbar-brand{display:flex;align-items:center;gap:.6rem;font-weight:900;font-size:1rem}
+.navbar-brand .emoji{font-size:1.5rem}
+.navbar-right{display:flex;align-items:center;gap:.75rem}
+.navbar-coins{color:#fbbf24;font-weight:900;font-size:1rem}
+.logout-btn{color:rgba(255,255,255,.5);font-size:.8rem;background:none;border:none;cursor:pointer}
+.boss-bar{background:linear-gradient(to right,rgba(127,29,29,.9),rgba(220,38,38,.5));padding:.5rem 1rem}
+.boss-bar-inner{display:flex;align-items:center;gap:.75rem}
+.boss-bar-info{flex:1}
+.boss-bar-name{display:flex;justify-content:space-between;font-size:.7rem;color:#fecaca;margin-bottom:.25rem}
+.boss-hp-track{width:100%;background:rgba(0,0,0,.4);border-radius:9999px;height:.6rem}
+.boss-hp-fill{background:linear-gradient(90deg,#ef4444,#f97316);height:100%;border-radius:9999px;transition:width .5s}
+.content{flex:1;padding:1rem;overflow-y:auto}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-bottom:1.25rem}
+.stat-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:.875rem .5rem;text-align:center}
+.stat-card .stat-icon{font-size:1.25rem;margin-bottom:.25rem}
+.stat-card .stat-val{font-size:1.25rem;font-weight:900}
+.stat-card .stat-label{font-size:.65rem;color:#6ee7b7;margin-top:.2rem}
+.card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:1rem;margin-bottom:.75rem}
+.card-row{display:flex;align-items:center;gap:.75rem}
+.card-icon{font-size:2rem;flex-shrink:0}
+.card-body{flex:1;min-width:0}
+.card-title{font-weight:700;font-size:.95rem}
+.card-meta{display:flex;gap:.75rem;font-size:.8rem;margin-top:.25rem;flex-wrap:wrap}
+.tag-gold{color:#fbbf24}.tag-red{color:#f87171}.tag-green{color:#6ee7b7}.tag-purple{color:#c084fc}
+.empty{text-align:center;padding:2.5rem;color:rgba(255,255,255,.4)}
+.empty .empty-icon{font-size:2.5rem;margin-bottom:.75rem}
+.toast{position:fixed;top:5rem;left:50%;transform:translateX(-50%);padding:.75rem 1.5rem;border-radius:1rem;font-weight:700;font-size:.875rem;z-index:9999;color:white;animation:slideUp .3s ease-out;white-space:nowrap;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast-success{background:#059669}.toast-error{background:#dc2626}
+.section-title{font-size:.85rem;font-weight:700;margin-bottom:.75rem;color:#c7d2fe}
+.bottom-nav{display:flex;background:rgba(0,0,0,.5);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.1)}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:.6rem .25rem;cursor:pointer;color:rgba(255,255,255,.45);font-size:.65rem;gap:.2rem;border:none;background:none}
+.bottom-nav-item .nav-icon{font-size:1.35rem}
+.bottom-nav-item.active{color:#10b981}
+.tab-content{display:none}.tab-content.active{display:block}
+.p-tabs{display:flex;gap:.4rem;overflow-x:auto;padding:.75rem;scrollbar-width:none}
+.p-tabs::-webkit-scrollbar{display:none}
+.p-tab{flex-shrink:0;padding:.4rem .875rem;border-radius:.75rem;font-size:.8rem;font-weight:600;background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);cursor:pointer;white-space:nowrap}
+.p-tab.active{background:rgba(99,102,241,.3);color:white}
+.pstat-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.5rem;margin-bottom:1rem}
+.pstat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:.75rem .5rem;text-align:center}
+.pstat .pstat-icon{font-size:1.25rem}.pstat .pstat-val{font-size:1.25rem;font-weight:900}.pstat .pstat-label{font-size:.6rem;color:#a5b4fc}
+.add-form{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:1rem;margin-bottom:1rem}
+.add-form h3{font-size:.9rem;font-weight:700;margin-bottom:.75rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.form-grid input{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:.5rem;padding:.5rem .75rem;color:white;font-size:.85rem;width:100%}
+.form-grid input::placeholder{color:rgba(255,255,255,.35)}
+.form-grid .full{grid-column:1/-1}
+.icon-picker-btn{background:rgba(255,255,255,.1);border:2px dashed rgba(255,255,255,.3);border-radius:.75rem;padding:.5rem;font-size:1.5rem;cursor:pointer;text-align:center;min-height:2.5rem;display:flex;align-items:center;justify-content:center}
+.icon-picker-grid{display:none;grid-template-columns:repeat(8,1fr);gap:.35rem;margin-top:.5rem;background:rgba(0,0,0,.3);border-radius:.75rem;padding:.5rem;max-height:200px;overflow-y:auto}
+.icon-picker-grid span{text-align:center;font-size:1.25rem;padding:.25rem;cursor:pointer;border-radius:.35rem}
+.icon-picker-grid span:hover{background:rgba(99,102,241,.4)}
+.rank-item{display:flex;align-items:center;gap:.75rem;padding:.75rem;border-radius:.875rem;margin-bottom:.5rem}
+.rank-1{background:linear-gradient(135deg,#fbbf24,#f59e0b)}.rank-2{background:linear-gradient(135deg,#94a3b8,#64748b)}.rank-3{background:linear-gradient(135deg,#d97706,#b45309)}.rank-other{background:rgba(255,255,255,.06)}
+.rank-num{font-size:1.1rem;font-weight:900;width:1.75rem;text-align:center}
+.rank-name{flex:1;font-weight:600;font-size:.9rem}.rank-score{font-weight:700}
+.store-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.store-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:1rem;padding:1rem;text-align:center;cursor:pointer}
+.store-card .store-icon{font-size:2.5rem;margin-bottom:.5rem}
+.store-card .store-name{font-weight:700;font-size:.9rem;margin-bottom:.25rem}
+.store-card .store-price{color:#fbbf24;font-weight:900}
+.boss-select-card{background:rgba(239,68,68,.1);border:2px solid rgba(239,68,68,.3);border-radius:1rem;padding:1rem;margin-bottom:.75rem;cursor:pointer}
+.boss-select-card.selected{border-color:#ef4444;background:rgba(239,68,68,.2)}
+.boss-hp-track-lg{width:100%;background:rgba(0,0,0,.3);border-radius:9999px;height:1.25rem;margin-top:.5rem}
+.boss-hp-fill-lg{background:linear-gradient(90deg,#ef4444,#f97316);height:100%;border-radius:9999px;transition:width .5s;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900}
+.attack-task-item{background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);border-radius:.75rem;padding:.75rem;margin-bottom:.5rem;cursor:pointer;display:flex;align-items:center;gap:.75rem}
+.attack-task-item.selected{border-color:#a855f7;background:rgba(168,85,247,.2)}
+.attack-task-item .atk-icon{font-size:1.5rem}.attack-task-item .atk-info{flex:1}
+.attack-task-item .atk-name{font-weight:700;font-size:.9rem}
+.attack-task-item .atk-damage{color:#f87171;font-size:.8rem;margin-top:.15rem}
+.attack-task-item .atk-check{font-size:1.25rem;width:1.5rem;text-align:center}
+.task-status{display:inline-block;padding:.2rem .5rem;border-radius:.375rem;font-size:.7rem;font-weight:700}
+.task-claimed{background:rgba(96,165,250,.2);color:#93c5fd}
+.task-pending{background:rgba(251,191,36,.2);color:#fde68a}
+.task-approved{background:rgba(16,185,129,.2);color:#6ee7b7}
+.task-rejected{background:rgba(239,68,68,.2);color:#fca5a5}
+.divider{border-bottom:1px solid rgba(255,255,255,.1);margin:1rem 0}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes slideUp{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.pulse{animation:pulse 2s infinite}
+</style>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="小勇士">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#6366f1">
+</head>
+<body>
+
+<div id="screen-parent-login" class="screen login-bg active">
+<div class="login-card">
+<div class="login-logo"><span class="emoji">🏰</span><h1>小勇士任务系统</h1><p>家长控制台 v2</p></div>
+<div id="parent-login-error" class="error-msg"></div>
+<div class="form-group"><label>用户名</label><input type="text" id="parent-username" placeholder="请输入用户名" autocomplete="off"></div>
+<div class="form-group"><label>密码</label><input type="password" id="parent-password" placeholder="请输入密码"></div>
+<button class="btn btn-purple" onclick="parentLogin()">🚀 进入控制台</button>
+<p class="hint">默认账号：admin / admin123</p>
+<div class="switch-link"><a onclick="showScreen('screen-child-login')">👦 切换到孩子端 →</a></div>
+</div>
+</div>
+
+<div id="screen-child-login" class="screen login-bg" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)">
+<div class="login-card">
+<div class="login-logo"><span class="emoji pulse">🦸</span><h1>小勇士</h1><p style="color:#6ee7b7">完成任务，击败BOSS！</p></div>
+<div id="child-login-error" class="error-msg"></div>
+<div class="form-group"><label>输入你的 PIN 码</label><input type="number" id="child-pin" class="pin-input" placeholder="●●●●" maxlength="6"></div>
+<button class="btn btn-green" onclick="childLogin()">⚔️ 出发冒险！</button>
+<div class="switch-link"><a onclick="showScreen('screen-parent-login')">👑 家长入口 →</a></div>
+</div>
+</div>
+
+<div id="screen-parent" class="screen" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)">
+<div class="navbar">
+<div class="navbar-brand"><span class="emoji">🏰</span><span>小勇士管理后台</span></div>
+<div class="navbar-right"><span style="color:#a5b4fc;font-size:.8rem">👑 admin</span><button class="logout-btn" onclick="logoutP()">退出</button></div>
+</div>
+<div class="p-tabs">
+<div class="p-tab active" onclick="switchPTab('pending')">📋 待审核</div>
+<div class="p-tab" onclick="switchPTab('children')">👶 孩子</div>
+<div class="p-tab" onclick="switchPTab('content')">⚙️ 内容</div>
+<div class="p-tab" onclick="switchPTab('ranking')">🏆 排行</div>
+</div>
+<div class="content">
+<div class="pstat-grid">
+<div class="pstat"><div class="pstat-icon">👶</div><div class="pstat-val" id="ps-children">0</div><div class="pstat-label">小勇士</div></div>
+<div class="pstat"><div class="pstat-icon">⭐</div><div class="pstat-val" id="ps-tasks">0</div><div class="pstat-label">任务</div></div>
+<div class="pstat"><div class="pstat-icon">📋</div><div class="pstat-val" id="ps-pending-task" style="color:#fbbf24">0</div><div class="pstat-label">待审任务</div></div>
+<div class="pstat"><div class="pstat-icon">🏪</div><div class="pstat-val" id="ps-pending-order" style="color:#f59e0b">0</div><div class="pstat-label">待审兑换</div></div>
+</div>
+<div id="parent-tab-pending" class="tab-content active">
+<div class="section-title">⭐ 任务审核</div><div id="pending-task-list"></div>
+<div class="divider"></div>
+<div class="section-title">🏪 兑换审核</div><div id="pending-order-list"></div>
+</div>
+<div id="parent-tab-children" class="tab-content">
+<div class="add-form"><h3>➕ 添加孩子</h3>
+<div class="form-grid">
+<input id="new-child-name" placeholder="孩子名称" class="full">
+<div><div class="icon-picker-btn" id="new-child-icon-btn" onclick="toggleIconPicker('new-child-icon',this)">🧒</div><div class="icon-picker-grid" id="new-child-icon-picker"></div><input type="hidden" id="new-child-icon" value="🧒"></div>
+<input id="new-child-pin" placeholder="PIN码(4-6位)" type="number">
+<button class="btn btn-purple full" onclick="addChild()">添加孩子</button>
+</div></div>
+<div id="children-list"></div>
+</div>
+<div id="parent-tab-content" class="tab-content">
+<div style="display:flex;gap:.4rem;padding:0 0 .75rem;overflow-x:auto">
+<div class="p-tab active" onclick="switchPCntTab('tasks')" id="pcnt-tab-tasks">⭐任务</div>
+<div class="p-tab" onclick="switchPCntTab('boss')" id="pcnt-tab-boss">👹BOSS</div>
+<div class="p-tab" onclick="switchPCntTab('store')" id="pcnt-tab-store">🏪商城</div>
+</div>
+<div id="pcnt-tasks">
+<div class="add-form"><h3>➕ 添加任务</h3>
+<div class="form-grid">
+<div><div class="icon-picker-btn" id="new-task-icon-btn" onclick="toggleIconPicker('new-task-icon',this)">⭐</div><div class="icon-picker-grid" id="new-task-icon-picker"></div><input type="hidden" id="new-task-icon" value="⭐"></div>
+<input id="new-task-name" placeholder="任务名称">
+<input id="new-task-coins" placeholder="金币" type="number" value="10">
+<input id="new-task-damage" placeholder="伤害" type="number" value="10">
+<button class="btn btn-purple full" onclick="addTask()">添加任务</button>
+</div></div>
+<div id="tasks-list"></div>
+</div>
+<div id="pcnt-boss" style="display:none">
+<div class="add-form"><h3>👹 添加新BOSS</h3>
+<div class="form-grid">
+<div><div class="icon-picker-btn" id="new-boss-icon-btn" onclick="toggleIconPicker('new-boss-icon',this)">👹</div><div class="icon-picker-grid" id="new-boss-icon-picker"></div><input type="hidden" id="new-boss-icon" value="👹"></div>
+<input id="new-boss-name" placeholder="BOSS名称">
+<input id="new-boss-health" placeholder="总血量" type="number" value="1000">
+<input id="new-boss-coins" placeholder="击杀奖励" type="number" value="100">
+<button class="btn btn-purple full" onclick="addBoss()">添加BOSS</button>
+</div></div>
+<div id="boss-list"></div>
+</div>
+<div id="pcnt-store" style="display:none">
+<div class="add-form"><h3>🏪 添加商品</h3>
+<div class="form-grid">
+<div><div class="icon-picker-btn" id="new-store-icon-btn" onclick="toggleIconPicker('new-store-icon',this)">🎁</div><div class="icon-picker-grid" id="new-store-icon-picker"></div><input type="hidden" id="new-store-icon" value="🎁"></div>
+<input id="new-store-name" placeholder="商品名称">
+<input id="new-store-price" placeholder="价格(金币)" type="number" value="50" class="full">
+<button class="btn btn-purple full" onclick="addStoreItem()">添加商品</button>
+</div></div>
+<div id="store-list-parent"></div>
+</div>
+</div>
+<div id="parent-tab-ranking" class="tab-content">
+<div class="section-title">🏆 金币排行榜</div><div id="coin-ranking"></div>
+<div class="section-title" style="margin-top:1rem">⚔️ 伤害排行榜</div><div id="damage-ranking"></div>
+</div>
+</div>
+</div>
+
+<div id="screen-child" class="screen" style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364)">
+<div class="navbar" style="background:rgba(0,0,0,.5)">
+<div class="navbar-brand"><span id="child-nav-avatar" class="emoji">🦸</span>
+<div><div id="child-nav-role" style="font-weight:900;font-size:.95rem">小勇士</div><div id="child-nav-level" style="color:#6ee7b7;font-size:.65rem">Lv.1</div></div>
+</div>
+<div class="navbar-right"><span id="child-nav-coins" class="navbar-coins">💰 0</span><button class="logout-btn" onclick="logoutC()">退出</button></div>
+</div>
+<div id="child-boss-bar" style="display:none" class="boss-bar">
+<div class="boss-bar-inner"><span id="child-boss-icon" class="pulse" style="font-size:1.5rem">🐉</span>
+<div class="boss-bar-info"><div class="boss-bar-name"><span id="child-boss-name">BOSS</span><span id="child-boss-hp">0/0</span></div>
+<div class="boss-hp-track"><div id="child-boss-fill" class="boss-hp-fill" style="width:100%"></div></div></div>
+</div>
+</div>
+<div class="content" style="padding-bottom:0">
+<div id="child-page-tasks" class="tab-content active">
+<div class="stats-row">
+<div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val tag-gold" id="cstat-coins">0</div><div class="stat-label">金币</div></div>
+<div class="stat-card"><div class="stat-icon">⚔️</div><div class="stat-val tag-red" id="cstat-damage">0</div><div class="stat-label">累计伤害</div></div>
+<div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-val tag-green" id="cstat-level">1</div><div class="stat-label">等级</div></div>
+</div>
+<div class="section-title">⭐ 可接任务</div><div id="child-tasks-list"></div>
+<div class="section-title" style="margin-top:1rem">⚔️ 可攻击任务 <span style="font-size:.7rem;color:#c084fc">(已审批通过)</span></div>
+<div id="child-attackable-list"></div>
+</div>
+<div id="child-page-attack" class="tab-content">
+<div class="section-title">👹 选择要攻击的BOSS</div>
+<div id="child-boss-select-list"></div>
+<div id="attack-task-section" style="display:none">
+<div class="divider"></div>
+<div class="section-title">⚔️ 选择攻击任务 <span id="selected-boss-label" style="font-size:.7rem;color:#f87171"></span></div>
+<div id="attack-task-list"></div>
+<button class="btn btn-purple" style="margin-top:1rem" onclick="doAttack()">🔥 发起攻击！</button>
+</div>
+</div>
+<div id="child-page-store" class="tab-content">
+<div class="section-title">🏪 奖励商城 <span id="child-store-coins" class="tag-gold" style="font-size:.8rem"></span></div>
+<div class="store-grid" id="child-store-grid"></div>
+</div>
+<div id="child-page-records" class="tab-content">
+<div class="section-title">📜 冒险记录</div><div id="child-records-list"></div>
+</div>
+</div>
+<div class="bottom-nav">
+<button class="bottom-nav-item active" onclick="switchCPage('tasks',this)"><span class="nav-icon">⭐</span>任务</button>
+<button class="bottom-nav-item" onclick="switchCPage('attack',this)"><span class="nav-icon">⚔️</span>攻击</button>
+<button class="bottom-nav-item" onclick="switchCPage('store',this)"><span class="nav-icon">🏪</span>商城</button>
+<button class="bottom-nav-item" onclick="switchCPage('records',this)"><span class="nav-icon">📜</span>记录</button>
+</div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===== AUDIO ===== */
+var _actx=null;
+function getACtx(){
+  if(!_actx) _actx=new(window.AudioContext||window.webkitAudioContext)();
+  if(_actx.state==='suspended') _actx.resume();
+  return _actx;
+}
+
+function playAttack(){
+  var ctx=getACtx();
+  // 冲击音：低频爆破 + 高频金属
+  [
+    {type:'sawtooth',freq:180,gain:.6,start:0,dur:.08,decay:.08},
+    {type:'square',freq:320,gain:.4,start:.02,dur:.12,decay:.1},
+    {type:'sine',freq:900,gain:.3,start:0,dur:.06,decay:.06},
+    {type:'sine',freq:1400,gain:.2,start:.03,dur:.05,decay:.05}
+  ].forEach(function(p){
+    var o=ctx.createOscillator();
+    var g=ctx.createGain();
+    o.type=p.type; o.frequency.value=p.freq;
+    g.gain.setValueAtTime(p.gain,ctx.currentTime+p.start);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+p.start+p.decay);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(ctx.currentTime+p.start);
+    o.stop(ctx.currentTime+p.start+p.dur);
+  });
+  // 噪声爆破
+  var buf=ctx.createBuffer(1,ctx.sampleRate*.15,ctx.sampleRate);
+  var d=buf.getChannelData(0);
+  for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+  var src=ctx.createBufferSource();
+  var ng=ctx.createGain(); ng.gain.value=.35;
+  src.buffer=buf; src.connect(ng); ng.connect(ctx.destination); src.start();
+}
+
+function playBossKill(){
+  var ctx=getACtx();
+  // 胜利音阶：C E G C(高)
+  [[261,.0],[329,.18],[392,.36],[523,.54]].forEach(function(n){
+    var o=ctx.createOscillator();
+    var g=ctx.createGain();
+    o.type='triangle'; o.frequency.value=n[0];
+    g.gain.setValueAtTime(.5,ctx.currentTime+n[1]);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+n[1]+.35);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(ctx.currentTime+n[1]);
+    o.stop(ctx.currentTime+n[1]+.4);
+  });
+  // 爆炸低音
+  var o2=ctx.createOscillator();
+  var g2=ctx.createGain();
+  o2.type='sine'; o2.frequency.setValueAtTime(120,ctx.currentTime);
+  o2.frequency.exponentialRampToValueAtTime(40,ctx.currentTime+.5);
+  g2.gain.setValueAtTime(.7,ctx.currentTime);
+  g2.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.5);
+  o2.connect(g2); g2.connect(ctx.destination);
+  o2.start(); o2.stop(ctx.currentTime+.5);
+}
+
+function playCoin(){
+  var ctx=getACtx();
+  // 金币音：两个短促高音
+  [[1046,.0,.12],[1318,.1,.12]].forEach(function(n){
+    var o=ctx.createOscillator();
+    var g=ctx.createGain();
+    o.type='sine'; o.frequency.value=n[0];
+    g.gain.setValueAtTime(.4,ctx.currentTime+n[1]);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+n[1]+n[2]);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(ctx.currentTime+n[1]);
+    o.stop(ctx.currentTime+n[1]+n[2]+.02);
+  });
+}
+
+function playApprove(){
+  var ctx=getACtx();
+  // 通过音：上升两音
+  [[523,.0,.15],[659,.12,.2]].forEach(function(n){
+    var o=ctx.createOscillator();
+    var g=ctx.createGain();
+    o.type='triangle'; o.frequency.value=n[0];
+    g.gain.setValueAtTime(.35,ctx.currentTime+n[1]);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+n[1]+n[2]);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(ctx.currentTime+n[1]);
+    o.stop(ctx.currentTime+n[1]+n[2]+.02);
+  });
+}
+
+function playError(){
+  var ctx=getACtx();
+  var o=ctx.createOscillator();
+  var g=ctx.createGain();
+  o.type='sawtooth'; o.frequency.value=180;
+  g.gain.setValueAtTime(.3,ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.2);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime+.2);
+}
+
+/* ===== DATA ===== */
+var ICONS = {
+  child: ['🧒','👦','👧','🦸','🥷','🤴','👸','🧙','🦹','🧝','🧛','🧜','🧚','🐉','🦊','🐺','🦁','🐻','🐼','🐨','🐯','🦄','🐸','🐵','🐶','🐱','🐭','🐹','🐰','🐷','🐮','🦮','🐕','🐩','🐈'],
+  task:  ['⭐','📚','✏️','🔬','🎨','🎵','📐','🧮','📖','✍️','🏃','🚴','🏊','⚽','🎾','🏋️','🧘','🚶','🧹','🍳','🛁','🪥','🧼','👕','🧦','👟','🎒','🛏️','🪴','🍎','🍇','🍓','🥕','🍚','🍜','🧃','🍪','🎂','🍕','🍔','🌮','🍟','🥗','🍝','🍲','🥟','🧇','🧀','🍿','🥜','🌰','🍯','💄','💅','🧖','💆','🚿','🛀','📝','📎','💰','💵'],
+  boss:  ['👹','🐉','🦁','🐺','👾','🤖','👻','💀','🦇','🐍','🦂','🕷️','🦑','🐙','🦞','🌋','⚡','🔥','💥','🌪️','🌊','❄️','🌈','🌙','☄️','🪐','🦖','🦕','🐲','👽','🛸','🔮','🎃'],
+  store: ['🎁','🍦','🎮','🎬','🍕','🍔','🍟','🌮','🍜','🎂','🍰','🧁','🍩','🍪','☕','🧃','🥤','🍫','🍬','🍭','🎨','🖍️','📚','📖','🎵','🎧','🕹️','⚽','🏀','🎯','🎳','🎲','🧩','🎭','🎪','🎫','🎟️','🎠','🎡','🎢','🏆','🥇','🥈','🥉','🏅','📱','⌚','💻','📷','🎥','📺']
+};
+
+/* ===== DB ===== */
+var DB = {
+  get: function(k,d){ try{ var v=localStorage.getItem('lw2_'+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+  set: function(k,v){ localStorage.setItem('lw2_'+k,JSON.stringify(v)); },
+  nextId: function(k){ var id=(this.get(k+'_seq',0))+1; this.set(k+'_seq',id); return id; }
+};
+
+/* ===== INIT ===== */
+function initData(){
+  if(DB.get('inited',false)) return;
+  DB.set('parents',[{id:1,username:'admin',password:'admin123'}]);
+  DB.set('children',[]);
+  DB.set('tasks',[]);
+  DB.set('boss',[]);
+  DB.set('store',[]);
+  DB.set('completions',[]);
+  DB.set('store_orders',[]);
+  DB.set('child_boss_progress',{});
+  DB.set('child_stats',{});
+  DB.set('inited',true);
+}
+
+/* ===== UTILS ===== */
+function toast(msg,type){
+  var t=document.createElement('div');
+  t.className='toast toast-'+(type||'success');
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); },3000);
+  if(type==='error') playError();
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el=document.getElementById(id);
+  if(el) el.classList.add('active');
+}
+
+function fmt(ts){
+  if(!ts) return '-';
+  var d=new Date(ts);
+  return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+
+/* ===== SESSION ===== */
+var session = DB.get('session',null);
+
+/* ===== AUTH ===== */
+function parentLogin(){
+  var u=document.getElementById('parent-username').value.trim();
+  var p=document.getElementById('parent-password').value;
+  var found=DB.get('parents',[]).find(function(x){ return x.username===u && x.password===p; });
+  if(found){
+    session={role:'parent',id:found.id};
+    DB.set('session',session);
+    document.getElementById('parent-login-error').style.display='none';
+    showScreen('screen-parent');
+    renderParent();
+  } else {
+    var el=document.getElementById('parent-login-error');
+    el.textContent='用户名或密码错误';
+    el.style.display='block';
+  }
+}
+
+function childLogin(){
+  var pin=document.getElementById('child-pin').value.trim();
+  var child=DB.get('children',[]).find(function(c){ return String(c.pin)===String(pin); });
+  if(child){
+    session={role:'child',id:child.id};
+    DB.set('session',session);
+    document.getElementById('child-login-error').style.display='none';
+    showScreen('screen-child');
+    renderChild();
+  } else {
+    var el=document.getElementById('child-login-error');
+    el.textContent='PIN码错误，请重试';
+    el.style.display='block';
+  }
+}
+
+function logoutP(){ DB.set('session',null); session=null; showScreen('screen-parent-login'); }
+function logoutC(){ DB.set('session',null); session=null; showScreen('screen-parent-login'); }
+
+/* ===== NAV ===== */
+function switchPTab(t){
+  var n=['pending','children','content','ranking'];
+  document.querySelectorAll('#screen-parent .p-tab').forEach(function(x,i){ x.classList.toggle('active',n[i]===t); });
+  document.querySelectorAll('#screen-parent > .content > .tab-content').forEach(function(x){ x.classList.remove('active'); });
+  var el=document.getElementById('parent-tab-'+t);
+  if(el) el.classList.add('active');
+}
+
+function switchPCntTab(t){
+  ['tasks','boss','store'].forEach(function(x){
+    var tab=document.getElementById('pcnt-tab-'+x);
+    if(tab) tab.classList.toggle('active',x===t);
+    var cnt=document.getElementById('pcnt-'+x);
+    if(cnt) cnt.style.display=x===t?'block':'none';
+  });
+}
+
+function switchCPage(p,b){
+  document.querySelectorAll('.bottom-nav-item').forEach(function(x){ x.classList.remove('active'); });
+  if(b) b.classList.add('active');
+  document.querySelectorAll('#screen-child .tab-content').forEach(function(x){ x.classList.remove('active'); });
+  var el=document.getElementById('child-page-'+p);
+  if(el) el.classList.add('active');
+  if(p==='attack') renderBossSelectList();
+  if(p==='store') renderChildStore();
+  if(p==='records') renderChildRecords();
+}
+
+/* ===== ICON PICKER ===== */
+var _activePicker=null;
+function toggleIconPicker(id,btn){
+  var picker=document.getElementById(id+'-picker');
+  if(!picker) return;
+  if(_activePicker && _activePicker!==picker){ _activePicker.style.display='none'; }
+  if(picker.style.display==='none'||!picker.style.display){
+    picker.style.display='grid';
+    if(!picker.dataset.built){
+      picker.dataset.built='1';
+      var setName=id.indexOf('child')>=0?'child':id.indexOf('boss')>=0?'boss':id.indexOf('store')>=0?'store':'task';
+      var icons=ICONS[setName]||ICONS.task;
+      picker.innerHTML='';
+      icons.forEach(function(icon){
+        var span=document.createElement('span');
+        span.textContent=icon;
+        span.onclick=function(){
+          document.getElementById(id).value=icon;
+          btn.textContent=icon;
+          picker.style.display='none';
+          _activePicker=null;
+        };
+        picker.appendChild(span);
+      });
+    }
+    _activePicker=picker;
+  } else {
+    picker.style.display='none';
+    _activePicker=null;
+  }
+}
+
+/* ===== PARENT ACTIONS ===== */
+function addChild(){
+  var name=document.getElementById('new-child-name').value.trim();
+  var avatar=document.getElementById('new-child-icon').value||'🧒';
+  var pin=document.getElementById('new-child-pin').value.trim();
+  if(!name||!pin){ toast('请填写名称和PIN码','error'); return; }
+  var children=DB.get('children',[]);
+  if(children.find(function(c){ return String(c.pin)===String(pin); })){ toast('PIN码已存在','error'); return; }
+  var id=DB.nextId('child');
+  children.push({id:id,name:name,avatar:avatar,pin:pin});
+  DB.set('children',children);
+  // init boss progress
+  var bp=DB.get('child_boss_progress',{});
+  bp[id]={};
+  DB.get('boss',[]).forEach(function(b){ bp[id][b.id]=b.health; });
+  DB.set('child_boss_progress',bp);
+  document.getElementById('new-child-name').value='';
+  document.getElementById('new-child-pin').value='';
+  toast('已添加 '+name+'，PIN: '+pin);
+  renderParent();
+}
+
+function deleteChild(id){
+  if(!confirm('确定删除？')) return;
+  DB.set('children',DB.get('children',[]).filter(function(c){ return c.id!==id; }));
+  renderParent();
+}
+
+function addTask(){
+  var icon=document.getElementById('new-task-icon').value||'⭐';
+  var name=document.getElementById('new-task-name').value.trim();
+  var coins=parseInt(document.getElementById('new-task-coins').value)||10;
+  var damage=parseInt(document.getElementById('new-task-damage').value)||10;
+  if(!name){ toast('请填写任务名称','error'); return; }
+  var tasks=DB.get('tasks',[]);
+  tasks.push({id:DB.nextId('task'),icon:icon,name:name,coins:coins,damage:damage});
+  DB.set('tasks',tasks);
+  document.getElementById('new-task-name').value='';
+  toast('任务已添加');
+  renderParent();
+}
+
+function deleteTask(id){
+  if(!confirm('确定删除？')) return;
+  DB.set('tasks',DB.get('tasks',[]).filter(function(t){ return t.id!==id; }));
+  renderParent();
+}
+
+function addBoss(){
+  var icon=document.getElementById('new-boss-icon').value||'👹';
+  var name=document.getElementById('new-boss-name').value.trim();
+  var health=parseInt(document.getElementById('new-boss-health').value)||1000;
+  var coins=parseInt(document.getElementById('new-boss-coins').value)||100;
+  if(!name){ toast('请填写BOSS名称','error'); return; }
+  var bosses=DB.get('boss',[]);
+  var newId=DB.nextId('boss');
+  bosses.push({id:newId,icon:icon,name:name,health:health,coins:coins,is_active:true,created_at:Date.now()});
+  DB.set('boss',bosses);
+  var bp=DB.get('child_boss_progress',{});
+  DB.get('children',[]).forEach(function(c){
+    if(!bp[c.id]) bp[c.id]={};
+    bp[c.id][newId]=health;
+  });
+  DB.set('child_boss_progress',bp);
+  document.getElementById('new-boss-name').value='';
+  toast('BOSS已添加');
+  renderParent();
+}
+
+function deleteBoss(id){
+  if(!confirm('确定删除？')) return;
+  DB.set('boss',DB.get('boss',[]).filter(function(b){ return b.id!==id; }));
+  renderParent();
+}
+
+function addStoreItem(){
+  var icon=document.getElementById('new-store-icon').value||'🎁';
+  var name=document.getElementById('new-store-name').value.trim();
+  var price=parseInt(document.getElementById('new-store-price').value)||50;
+  if(!name){ toast('请填写商品名称','error'); return; }
+  var store=DB.get('store',[]);
+  store.push({id:DB.nextId('store'),icon:icon,name:name,price:price});
+  DB.set('store',store);
+  document.getElementById('new-store-name').value='';
+  toast('商品已添加');
+  renderParent();
+}
+
+function deleteStoreItem(id){
+  if(!confirm('确定删除？')) return;
+  DB.set('store',DB.get('store',[]).filter(function(s){ return s.id!==id; }));
+  renderParent();
+}
+
+function approveTask(id){
+  var cs=DB.get('completions',[]);
+  var c=cs.find(function(x){ return x.id===id; });
+  if(!c) return;
+  var cid=c.child_id;
+  var tid=c.task_id;
+  var claimed_at=c.claimed_at;
+  var completed_at=c.completed_at;
+  
+  // 发放金币
+  var tasks=DB.get('tasks',[]);
+  var task=tasks.find(function(t){ return t.id===tid; });
+  if(task){
+    var stats=DB.get('child_stats',{});
+    if(!stats[cid]) stats[cid]={coins:0,damage:0};
+    stats[cid].coins=(stats[cid].coins||0)+task.coins;
+    DB.set('child_stats',stats);
+    toast('任务已通过！奖励 '+task.coins+' 💰');
+    playCoin();
+  } else {
+    toast('任务已通过！');
+    playApprove();
+  }
+  
+  // 创建攻击记录（保留完整时间线）
+  cs.push({
+    id:DB.nextId('completion'),
+    child_id:cid,
+    task_id:tid,
+    status:'approved',
+    claimed_at:claimed_at,
+    completed_at:completed_at,
+    approved_at:Date.now(),
+    attacked:false
+  });
+  
+  // 删除原记录，任务回到可认领状态
+  DB.set('completions',cs.filter(function(x){ return x.id!==id; }));
+  renderParent();
+}
+
+function rejectTask(id){
+  var cs=DB.get('completions',[]);
+  var c=cs.find(function(x){ return x.id===id; });
+  if(c){ c.status='rejected'; DB.set('completions',cs); toast('任务已拒绝'); renderParent(); }
+}
+
+function approveOrder(id){
+  var orders=DB.get('store_orders',[]);
+  var o=orders.find(function(x){ return x.id===id; });
+  if(o){ o.status='approved'; o.approved_at=Date.now(); DB.set('store_orders',orders); toast('兑换已通过！请发放奖励'); renderParent(); }
+}
+
+function rejectOrder(id){
+  var orders=DB.get('store_orders',[]);
+  var o=orders.find(function(x){ return x.id===id; });
+  if(o){
+    // refund
+    var stats=DB.get('child_stats',{});
+    if(!stats[o.child_id]) stats[o.child_id]={coins:0,damage:0};
+    var store=DB.get('store',[]);
+    var item=store.find(function(x){ return x.id===o.store_id; });
+    if(item){ stats[o.child_id].coins+=item.price; DB.set('child_stats',stats); }
+    o.status='rejected';
+    DB.set('store_orders',orders);
+    toast('已拒绝，金币已退还');
+    renderParent();
+  }
+}
+
+/* ===== CHILD ACTIONS ===== */
+function claimTask(taskId){
+  var cid=session.id;
+  var cs=DB.get('completions',[]);
+  // 检查是否已有可攻击的该任务（已审核但未攻击）
+  var attackable=cs.find(function(x){ return x.child_id===cid && x.task_id===taskId && x.status==='approved' && !x.attacked; });
+  if(attackable){ toast('该任务已通过审核，请去攻击BOSS！','error'); return; }
+  // 检查是否已认领/待审核中
+  var existing=cs.find(function(x){ return x.child_id===cid && x.task_id===taskId && (x.status==='claimed'||x.status==='pending'); });
+  if(existing){ toast('已认领或待审核中','error'); return; }
+  cs.push({id:DB.nextId('completion'),child_id:cid,task_id:taskId,status:'claimed',claimed_at:Date.now(),attacked:false});
+  DB.set('completions',cs);
+  toast('已认领！完成后点击"完成"提交');
+  renderChild();
+}
+
+function completeTask(taskId){
+  var cid=session.id;
+  var cs=DB.get('completions',[]);
+  var c=cs.find(function(x){ return x.child_id===cid && x.task_id===taskId && x.status==='claimed'; });
+  if(c){ c.status='pending'; c.completed_at=Date.now(); DB.set('completions',cs); toast('已提交，等待家长审核！'); renderChild(); }
+}
+
+function requestExchange(storeId){
+  var cid=session.id;
+  var store=DB.get('store',[]);
+  var item=store.find(function(x){ return x.id===storeId; });
+  if(!item) return;
+  var stats=DB.get('child_stats',{});
+  var s=stats[cid]||{coins:0,damage:0};
+  if(s.coins<item.price){ toast('金币不足！需要'+item.price+'，当前'+s.coins,'error'); return; }
+  if(!confirm('确认花费'+item.price+'金币兑换"'+item.name+'"？')) return;
+  s.coins-=item.price;
+  stats[cid]=s;
+  DB.set('child_stats',stats);
+  var orders=DB.get('store_orders',[]);
+  orders.push({id:DB.nextId('order'),child_id:cid,store_id:storeId,status:'pending',created_at:Date.now()});
+  DB.set('store_orders',orders);
+  toast('兑换申请已提交，等待家长审核！');
+  renderChild();
+}
+
+/* ===== ATTACK ===== */
+var _selBoss=null, _selTask=null;
+
+function selectBoss(bossId){
+  _selBoss=bossId; _selTask=null;
+  document.querySelectorAll('.boss-select-card').forEach(function(c){ c.classList.remove('selected'); });
+  var card=document.getElementById('bsc-'+bossId);
+  if(card) card.classList.add('selected');
+  document.getElementById('attack-task-section').style.display='block';
+  renderAttackTaskList();
+}
+
+function renderAttackTaskList(){
+  var cid=session.id;
+  var cs=DB.get('completions',[]);
+  var tasks=DB.get('tasks',[]);
+  // 只显示已审核但未攻击的任务
+  var avail=cs.filter(function(c){ return c.child_id===cid && c.status==='approved' && !c.attacked; });
+  var el=document.getElementById('attack-task-list');
+  if(!avail.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">⚔️</div><p>没有可用的攻击任务<br>完成任务并通过审核后才能攻击</p></div>';
+    return;
+  }
+  el.innerHTML=avail.map(function(c){
+    var task=tasks.find(function(t){ return t.id===c.task_id; })||{};
+    var sel=_selTask===c.id;
+    return '<div class="attack-task-item'+(sel?' selected':'')+'" onclick="selectAttackTask('+c.id+')">'
+      +'<span class="atk-check">'+(sel?'✓':'○')+'</span>'
+      +'<span class="atk-icon">'+(task.icon||'⭐')+'</span>'
+      +'<div class="atk-info"><div class="atk-name">'+(task.name||'?')+'</div>'
+      +'<div class="atk-damage">⚔️ 伤害: '+(task.damage||0)+'</div></div>'
+      +'</div>';
+  }).join('');
+}
+
+function selectAttackTask(id){ _selTask=id; renderAttackTaskList(); }
+
+function doAttack(){
+  if(!_selBoss){ toast('请先选择BOSS','error'); return; }
+  if(!_selTask){ toast('请先选择攻击任务','error'); return; }
+  var cid=session.id;
+  var cs=DB.get('completions',[]);
+  var c=cs.find(function(x){ return x.id===_selTask; });
+  if(!c){ toast('任务不存在','error'); return; }
+  var tasks=DB.get('tasks',[]);
+  var task=tasks.find(function(t){ return t.id===c.task_id; })||{};
+  var damage=task.damage||0;
+  var bosses=DB.get('boss',[]);
+  var boss=bosses.find(function(b){ return b.id===_selBoss; });
+  if(!boss){ toast('BOSS不存在','error'); return; }
+  var bp=DB.get('child_boss_progress',{});
+  if(!bp[cid]) bp[cid]={};
+  var hp=bp[cid][_selBoss]!==undefined?bp[cid][_selBoss]:boss.health;
+  var newHp=Math.max(0,hp-damage);
+  bp[cid][_selBoss]=newHp;
+  DB.set('child_boss_progress',bp);
+  c.attacked=true; c.attacked_at=Date.now();
+  DB.set('completions',cs);
+  var stats=DB.get('child_stats',{});
+  if(!stats[cid]) stats[cid]={coins:0,damage:0};
+  stats[cid].damage=(stats[cid].damage||0)+damage;
+  if(newHp<=0){
+    stats[cid].coins=(stats[cid].coins||0)+boss.coins;
+    toast('🎉 BOSS击败！奖励'+boss.coins+'金币！');
+    playBossKill();
+  } else {
+    toast('⚔️ 攻击成功！造成'+damage+'伤害！BOSS剩余'+newHp+'HP');
+    playAttack();
+  }
+  DB.set('child_stats',stats);
+  _selBoss=null; _selTask=null;
+  document.getElementById('attack-task-section').style.display='none';
+  renderChild();
+  renderBossSelectList();
+}
+
+/* ===== RENDER PARENT ===== */
+function renderParent(){
+  var children=DB.get('children',[]);
+  var tasks=DB.get('tasks',[]);
+  var store=DB.get('store',[]);
+  var bosses=DB.get('boss',[]);
+  var cs=DB.get('completions',[]);
+  var orders=DB.get('store_orders',[]);
+  var stats=DB.get('child_stats',{});
+  var bp=DB.get('child_boss_progress',{});
+
+  var pendingTasks=cs.filter(function(c){ return c.status==='pending'||c.status==='claimed'; });
+  var pendingOrders=orders.filter(function(o){ return o.status==='pending'; });
+
+  document.getElementById('ps-children').textContent=children.length;
+  document.getElementById('ps-tasks').textContent=tasks.length;
+  document.getElementById('ps-pending-task').textContent=pendingTasks.length;
+  document.getElementById('ps-pending-order').textContent=pendingOrders.length;
+
+  // pending tasks
+  var ptEl=document.getElementById('pending-task-list');
+  if(!pendingTasks.length){
+    ptEl.innerHTML='<div class="empty"><div class="empty-icon">🎉</div><p>暂无待审核任务</p></div>';
+  } else {
+    ptEl.innerHTML=pendingTasks.map(function(c){
+      var child=children.find(function(x){ return x.id===c.child_id; })||{name:'?'};
+      var task=tasks.find(function(x){ return x.id===c.task_id; })||{icon:'⭐',name:'?',coins:0,damage:0};
+      var stText=c.status==='claimed'?'已认领':'已完成待审';
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+task.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+child.name+' 完成了 '+task.name+'</div>'
+        +'<div class="card-meta"><span class="tag-gold">+'+task.coins+'💰</span><span class="tag-red">+'+task.damage+'⚔️</span>'
+        +'<span class="task-status task-pending">'+stText+'</span></div>'
+        +'<div style="font-size:.75rem;color:#a5b4fc;margin-top:.25rem">认领:'+fmt(c.claimed_at)+' 完成:'+fmt(c.completed_at)+'</div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:.4rem">'
+        +'<button class="btn btn-green btn-sm" onclick="approveTask('+c.id+')">✓通过</button>'
+        +'<button class="btn btn-red btn-sm" onclick="rejectTask('+c.id+')">✗拒绝</button>'
+        +'</div></div></div>';
+    }).join('');
+  }
+
+  // pending orders
+  var poEl=document.getElementById('pending-order-list');
+  if(!pendingOrders.length){
+    poEl.innerHTML='<div class="empty"><div class="empty-icon">🏪</div><p>暂无待审核兑换</p></div>';
+  } else {
+    poEl.innerHTML=pendingOrders.map(function(o){
+      var child=children.find(function(x){ return x.id===o.child_id; })||{name:'?'};
+      var item=store.find(function(x){ return x.id===o.store_id; })||{icon:'🎁',name:'?',price:0};
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+item.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+child.name+' 申请兑换</div>'
+        +'<div class="card-meta"><span class="tag-gold">'+item.name+'</span><span class="tag-purple">'+item.price+'💰</span></div>'
+        +'<div style="font-size:.75rem;color:#a5b4fc;margin-top:.25rem">申请时间:'+fmt(o.created_at)+'</div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:.4rem">'
+        +'<button class="btn btn-green btn-sm" onclick="approveOrder('+o.id+')">✓通过</button>'
+        +'<button class="btn btn-red btn-sm" onclick="rejectOrder('+o.id+')">✗拒绝</button>'
+        +'</div></div></div>';
+    }).join('');
+  }
+
+  // children list
+  var clEl=document.getElementById('children-list');
+  if(!children.length){
+    clEl.innerHTML='<div class="empty"><div class="empty-icon">👶</div><p>还没有孩子，快添加吧</p></div>';
+  } else {
+    clEl.innerHTML=children.map(function(c){
+      var s=stats[c.id]||{coins:0,damage:0};
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+c.avatar+'</span>'
+        +'<div class="card-body"><div class="card-title">'+c.name+'</div>'
+        +'<div class="card-meta"><span class="tag-gold">PIN: '+c.pin+'</span>'
+        +'<span class="tag-gold">💰'+s.coins+'</span>'
+        +'<span class="tag-red">⚔️'+s.damage+'</span></div></div>'
+        +'<button class="btn btn-red btn-sm" onclick="deleteChild('+c.id+')">删除</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  // tasks list
+  var tlEl=document.getElementById('tasks-list');
+  if(!tasks.length){
+    tlEl.innerHTML='<div class="empty"><p>还没有任务</p></div>';
+  } else {
+    tlEl.innerHTML=tasks.map(function(t){
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+t.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+t.name+'</div>'
+        +'<div class="card-meta"><span class="tag-gold">+'+t.coins+'💰</span><span class="tag-red">+'+t.damage+'⚔️</span></div></div>'
+        +'<button class="btn btn-red btn-sm" onclick="deleteTask('+t.id+')">删除</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  // boss list
+  var blEl=document.getElementById('boss-list');
+  if(!bosses.length){
+    blEl.innerHTML='<div class="empty"><p>还没有BOSS</p></div>';
+  } else {
+    blEl.innerHTML=bosses.map(function(b){
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+b.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+b.name+'</div>'
+        +'<div class="card-meta"><span class="tag-red">HP: '+b.health+'</span><span class="tag-gold">奖励: '+b.coins+'💰</span></div></div>'
+        +'<button class="btn btn-red btn-sm" onclick="deleteBoss('+b.id+')">删除</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  // store list
+  var slEl=document.getElementById('store-list-parent');
+  if(!store.length){
+    slEl.innerHTML='<div class="empty"><p>还没有商品</p></div>';
+  } else {
+    slEl.innerHTML=store.map(function(s){
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+s.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+s.name+'</div>'
+        +'<div class="card-meta"><span class="tag-gold">'+s.price+'💰</span></div></div>'
+        +'<button class="btn btn-red btn-sm" onclick="deleteStoreItem('+s.id+')">删除</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  // ranking
+  var rankChildren=children.slice().sort(function(a,b){
+    return ((stats[b.id]||{}).coins||0)-((stats[a.id]||{}).coins||0);
+  });
+  var medals=['🥇','🥈','🥉'];
+  document.getElementById('coin-ranking').innerHTML=rankChildren.length
+    ? rankChildren.map(function(c,i){
+        var s=stats[c.id]||{coins:0};
+        var cls=i<3?'rank-'+(i+1):'rank-other';
+        return '<div class="rank-item '+cls+'">'
+          +'<span class="rank-num">'+(medals[i]||i+1)+'</span>'
+          +'<span style="font-size:1.25rem">'+c.avatar+'</span>'
+          +'<span class="rank-name">'+c.name+'</span>'
+          +'<span class="rank-score tag-gold">'+s.coins+'💰</span>'
+          +'</div>';
+      }).join('')
+    : '<div class="empty"><p>暂无数据</p></div>';
+
+  var rankDmg=children.slice().sort(function(a,b){
+    return ((stats[b.id]||{}).damage||0)-((stats[a.id]||{}).damage||0);
+  });
+  document.getElementById('damage-ranking').innerHTML=rankDmg.length
+    ? rankDmg.map(function(c,i){
+        var s=stats[c.id]||{damage:0};
+        var cls=i<3?'rank-'+(i+1):'rank-other';
+        return '<div class="rank-item '+cls+'">'
+          +'<span class="rank-num">'+(medals[i]||i+1)+'</span>'
+          +'<span style="font-size:1.25rem">'+c.avatar+'</span>'
+          +'<span class="rank-name">'+c.name+'</span>'
+          +'<span class="rank-score tag-red">'+s.damage+'⚔️</span>'
+          +'</div>';
+      }).join('')
+    : '<div class="empty"><p>暂无数据</p></div>';
+}
+
+/* ===== RENDER CHILD ===== */
+function renderChild(){
+  var cid=session.id;
+  var children=DB.get('children',[]);
+  var tasks=DB.get('tasks',[]);
+  var cs=DB.get('completions',[]);
+  var stats=DB.get('child_stats',{});
+  var child=children.find(function(c){ return c.id===cid; })||{name:'小勇士',avatar:'🦸'};
+  var s=stats[cid]||{coins:0,damage:0};
+  var level=Math.floor(s.damage/100)+1;
+
+  document.getElementById('child-nav-avatar').textContent=child.avatar;
+  document.getElementById('child-nav-role').textContent=child.name;
+  document.getElementById('child-nav-level').textContent='Lv.'+level;
+  document.getElementById('child-nav-coins').textContent='💰 '+s.coins;
+  document.getElementById('cstat-coins').textContent=s.coins;
+  document.getElementById('cstat-damage').textContent=s.damage;
+  document.getElementById('cstat-level').textContent=level;
+
+  // boss bar - show first active boss
+  var bosses=DB.get('boss',[]);
+  var bp=DB.get('child_boss_progress',{});
+  var activeBoss=bosses.find(function(b){ return b.is_active; });
+  var bossBar=document.getElementById('child-boss-bar');
+  if(activeBoss){
+    bossBar.style.display='block';
+    var hp=bp[cid]&&bp[cid][activeBoss.id]!==undefined?bp[cid][activeBoss.id]:activeBoss.health;
+    var pct=Math.max(0,Math.min(100,Math.round(hp/activeBoss.health*100)));
+    document.getElementById('child-boss-icon').textContent=activeBoss.icon;
+    document.getElementById('child-boss-name').textContent=activeBoss.name;
+    document.getElementById('child-boss-hp').textContent=hp+'/'+activeBoss.health;
+    document.getElementById('child-boss-fill').style.width=pct+'%';
+  } else {
+    bossBar.style.display='none';
+  }
+
+  // tasks list - 显示所有任务，根据状态显示不同按钮
+  var tlEl=document.getElementById('child-tasks-list');
+  if(!tasks.length){
+    tlEl.innerHTML='<div class="empty"><div class="empty-icon">⭐</div><p>还没有任务</p></div>';
+  } else {
+    tlEl.innerHTML=tasks.map(function(t){
+      // 查找该任务的活跃记录
+      var claimed=cs.find(function(c){ return c.child_id===cid&&c.task_id===t.id&&c.status==='claimed'; });
+      var pending=cs.find(function(c){ return c.child_id===cid&&c.task_id===t.id&&c.status==='pending'; });
+      // 是否有可攻击的该任务（已审核未攻击）
+      var attackable=cs.find(function(c){ return c.child_id===cid&&c.task_id===t.id&&c.status==='approved'&&!c.attacked; });
+      
+      var btn='';
+      if(pending){
+        btn='<span class="task-status task-pending">⏳待审核</span>';
+      } else if(claimed){
+        btn='<button class="btn btn-gold btn-sm" onclick="completeTask('+t.id+')">✓完成</button>';
+      } else {
+        // 可认领状态（从未认领过，或审核通过后可重新认领）
+        btn='<button class="btn btn-green btn-sm" onclick="claimTask('+t.id+')">认领</button>';
+      }
+      
+      // 额外提示：如果有可攻击的该任务（攻击券）
+      var attackHint=attackable?'<span class="task-status task-approved" style="margin-left:.5rem">有攻击券</span>':'';
+      
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+t.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+t.name+attackHint+'</div>'
+        +'<div class="card-meta"><span class="tag-gold">+'+t.coins+'💰</span><span class="tag-red">+'+t.damage+'⚔️</span></div></div>'
+        +btn+'</div></div>';
+    }).join('');
+  }
+
+  // attackable list - 显示所有已审核但未攻击的任务（审核通过后生成）
+  var atEl=document.getElementById('child-attackable-list');
+  var attackable=cs.filter(function(c){ return c.child_id===cid&&c.status==='approved'&&!c.attacked; });
+  if(!attackable.length){
+    atEl.innerHTML='<div class="empty"><p>暂无可用攻击券<br>完成任务并通过审核后获得</p></div>';
+  } else {
+    atEl.innerHTML=attackable.map(function(c){
+      var task=tasks.find(function(t){ return t.id===c.task_id; })||{icon:'⭐',name:'?',damage:0};
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+task.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+task.name+' <span style="font-size:.7rem;color:#c084fc">(攻击券)</span></div>'
+        +'<div class="card-meta"><span class="tag-red">⚔️ 伤害: '+task.damage+'</span>'
+        +'<span class="task-status task-approved">未使用</span></div></div>'
+        +'<button class="btn btn-red btn-sm" onclick="switchCPage(\'attack\',document.querySelectorAll(\'.bottom-nav-item\')[1])">去攻击</button>'
+        +'</div></div>';
+    }).join('');
+  }
+}
+
+function renderBossSelectList(){
+  var cid=session.id;
+  var bosses=DB.get('boss',[]);
+  var bp=DB.get('child_boss_progress',{});
+  var el=document.getElementById('child-boss-select-list');
+  if(!bosses.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">👹</div><p>还没有BOSS，请家长添加</p></div>';
+    return;
+  }
+  el.innerHTML=bosses.map(function(b){
+    var hp=bp[cid]&&bp[cid][b.id]!==undefined?bp[cid][b.id]:b.health;
+    var pct=Math.max(0,Math.min(100,Math.round(hp/b.health*100)));
+    return '<div class="boss-select-card" id="bsc-'+b.id+'" onclick="selectBoss('+b.id+')">'
+      +'<div style="display:flex;align-items:center;gap:.75rem">'
+      +'<span style="font-size:2rem">'+b.icon+'</span>'
+      +'<div style="flex:1"><div style="font-weight:700">'+b.name+'</div>'
+      +'<div style="font-size:.8rem;color:#fca5a5">HP: '+hp+'/'+b.health+' | 奖励: '+b.coins+'💰</div></div>'
+      +'<span style="font-size:.8rem;color:#f87171">点击选择</span>'
+      +'</div>'
+      +'<div class="boss-hp-track-lg"><div class="boss-hp-fill-lg" style="width:'+pct+'%">'+(pct>15?pct+'%':'')+'</div></div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderChildStore(){
+  var cid=session.id;
+  var store=DB.get('store',[]);
+  var stats=DB.get('child_stats',{});
+  var s=stats[cid]||{coins:0};
+  document.getElementById('child-store-coins').textContent='当前金币: '+s.coins+'💰';
+  var el=document.getElementById('child-store-grid');
+  if(!store.length){
+    el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏪</div><p>商城暂无商品</p></div>';
+    return;
+  }
+  el.innerHTML=store.map(function(item){
+    var canBuy=s.coins>=item.price;
+    return '<div class="store-card" onclick="requestExchange('+item.id+')" style="'+(canBuy?'':'opacity:.5')+'">'
+      +'<div class="store-icon">'+item.icon+'</div>'
+      +'<div class="store-name">'+item.name+'</div>'
+      +'<div class="store-price">'+item.price+'💰</div>'
+      +'<div style="font-size:.7rem;color:'+(canBuy?'#6ee7b7':'#f87171')+';margin-top:.25rem">'+(canBuy?'点击兑换':'金币不足')+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function renderChildRecords(){
+  var cid=session.id;
+  var cs=DB.get('completions',[]);
+  var tasks=DB.get('tasks',[]);
+  var orders=DB.get('store_orders',[]);
+  var store=DB.get('store',[]);
+  var el=document.getElementById('child-records-list');
+  var myCs=cs.filter(function(c){ return c.child_id===cid; }).reverse();
+  var myOs=orders.filter(function(o){ return o.child_id===cid; }).reverse();
+  if(!myCs.length&&!myOs.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">📜</div><p>还没有冒险记录</p></div>';
+    return;
+  }
+  var html='';
+  if(myCs.length){
+    html+='<div class="section-title">⭐ 任务记录</div>';
+    html+=myCs.map(function(c){
+      var task=tasks.find(function(t){ return t.id===c.task_id; })||{icon:'⭐',name:'?'};
+      var stMap={claimed:'已认领',pending:'待审核',approved:'已通过',rejected:'已拒绝'};
+      var stCls={claimed:'task-claimed',pending:'task-pending',approved:'task-approved',rejected:'task-rejected'};
+      // 构建时间线显示
+      var timeline='';
+      if(c.claimed_at) timeline+='认领:'+fmt(c.claimed_at)+' ';
+      if(c.completed_at) timeline+='完成:'+fmt(c.completed_at)+' ';
+      if(c.approved_at) timeline+='通过:'+fmt(c.approved_at)+' ';
+      if(c.attacked_at) timeline+='攻击:'+fmt(c.attacked_at);
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+task.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+task.name+'</div>'
+        +'<div class="card-meta"><span class="task-status '+(stCls[c.status]||'task-claimed')+'">'+(stMap[c.status]||c.status)+'</span>'
+        +(c.attacked?'<span class="tag-red">已攻击BOSS</span>':'')+'</div>'
+        +'<div style="font-size:.7rem;color:#a5b4fc;margin-top:.25rem">'+timeline+'</div>'
+        +'</div></div></div>';
+    }).join('');
+  }
+  if(myOs.length){
+    html+='<div class="section-title" style="margin-top:1rem">🏪 兑换记录</div>';
+    html+=myOs.map(function(o){
+      var item=store.find(function(x){ return x.id===o.store_id; })||{icon:'🎁',name:'?',price:0};
+      var stMap={pending:'待审核',approved:'已通过',rejected:'已拒绝'};
+      var stCls={pending:'task-pending',approved:'task-approved',rejected:'task-rejected'};
+      return '<div class="card"><div class="card-row">'
+        +'<span class="card-icon">'+item.icon+'</span>'
+        +'<div class="card-body"><div class="card-title">'+item.name+'</div>'
+        +'<div class="card-meta"><span class="tag-gold">'+item.price+'💰</span>'
+        +'<span class="task-status '+(stCls[o.status]||'task-pending')+'">'+(stMap[o.status]||o.status)+'</span></div>'
+        +'<div style="font-size:.75rem;color:#a5b4fc">'+fmt(o.created_at)+'</div>'
+        +'</div></div></div>';
+    }).join('');
+  }
+  el.innerHTML=html;
+}
+
+/* ===== STARTUP ===== */
+initData();
+if(session){
+  if(session.role==='parent'){ showScreen('screen-parent'); renderParent(); }
+  else { showScreen('screen-child'); renderChild(); }
+}
+
+/* ===== EXPOSE GLOBALS ===== */
+window.parentLogin=parentLogin;
+window.childLogin=childLogin;
+window.logoutP=logoutP;
+window.logoutC=logoutC;
+window.showScreen=showScreen;
+window.switchPTab=switchPTab;
+window.switchPCntTab=switchPCntTab;
+window.switchCPage=switchCPage;
+window.toggleIconPicker=toggleIconPicker;
+window.addChild=addChild;
+window.deleteChild=deleteChild;
+window.addTask=addTask;
+window.deleteTask=deleteTask;
+window.addBoss=addBoss;
+window.deleteBoss=deleteBoss;
+window.addStoreItem=addStoreItem;
+window.deleteStoreItem=deleteStoreItem;
+window.approveTask=approveTask;
+window.rejectTask=rejectTask;
+window.approveOrder=approveOrder;
+window.rejectOrder=rejectOrder;
+window.claimTask=claimTask;
+window.completeTask=completeTask;
+window.requestExchange=requestExchange;
+window.selectBoss=selectBoss;
+window.selectAttackTask=selectAttackTask;
+window.doAttack=doAttack;
+
+window.playAttack=playAttack;
+window.playBossKill=playBossKill;
+window.playCoin=playCoin;
+window.playApprove=playApprove;
+window.playError=playError;
+
+})();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(r){ console.log('SW registered'); })
+      .catch(function(e){ console.log('SW error', e); });
+  });
+}
+</script>
+</body>
+</html>
